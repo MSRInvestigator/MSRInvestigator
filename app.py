@@ -1,6 +1,6 @@
 
 from flask import Flask, render_template, request, redirect, session, url_for
-from models import init_db, add_log_entry, get_logs_by_user, calculate_total_hours
+from models import init_db, add_log_entry, get_logs_by_user
 from gpt_assistant import summarize_hours
 import os
 
