@@ -1,0 +1,33 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Intern Dashboard</title>
+</head>
+<body>
+    <h2>Welcome, {{ session['username'] }}</h2>
+    <h3>Total Hours Logged: {{ total_hours }}</h3>
+
+    <form method="POST" action="/log">
+        <label>Date: <input type="date" name="date" required></label><br>
+        <label>Start Time: <input type="time" name="start" required></label><br>
+        <label>End Time: <input type="time" name="end" required></label><br>
+        <label>Task: <input type="text" name="task" required></label><br>
+        <button type="submit">Log Hours</button>
+    </form>
+
+    <h3>Previous Logs</h3>
+    <table border="1">
+        <tr><th>Date</th><th>Start</th><th>End</th><th>Task</th><th>Hours</th></tr>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.date }}</td>
+            <td>{{ log.start }}</td>
+            <td>{{ log.end }}</td>
+            <td>{{ log.task }}</td>
+            <td>{{ log.hours }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
