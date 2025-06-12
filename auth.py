@@ -3,10 +3,10 @@ from passlib.hash import phpass
 
 def get_wp_user(username, password):
     conn = mysql.connector.connect(
-        host="your-db-host",
-        user="your-db-user",
-        password="your-db-password",
-        database="your-wp-database"
+        host="REPLACE_WITH_YOUR_EXTERNAL_DB_HOST",  # e.g., i1816040.db.godaddy.com
+        user="i1816040_wp2",
+        password="H.qVNOLd8O39IKmlQFa50",
+        database="i1816040_wp2"
     )
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM wp_users WHERE user_login = %s", (username,))
