@@ -1,19 +1,31 @@
-
+import os
 import mysql.connector
 from passlib.hash import phpass
+from dotenv import load_dotenv
 
-def get_wp_user(username, password):
-    conn = mysql.connector.connect(
-        host="msradminwp1.db.330.hostedresource.com",  # External MySQL hostname
-        user="i1816040_wp2",                          # DB username
-        password="H.qVNOLd8O39IKmlQFa50",             # DB password
-        database="i1816040_wp2"                       # DB name
+load_dotenv()
+
+def get_db_connection():
+    return mysql.connector.connect(
+        host=os.getenv("DB_HOST"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        database=os.getenv("DB_NAME")
     )
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM wp_users WHERE user_login = %s", (username,))
-    user = cursor.fetchone()
+
+def create_user(username, password):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    hashed_pw = phpass.hash(password)
+    cursor.execute("INSERT INTO wp_users (user_login, user_pass, user_email) VALUES (%s, %s, %s)",
+                   (username, hashed_pw, f"{username}@example.com"))
+    conn.commit()
     conn.close()
 
-    if user and phpass.verify(password, user['user_pass']):
-        return user
-    return None
+def user_exists(username):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT ID FROM wp_users WHERE user_login = %s", (username,))
+    result = cursor.fetchone()
+    conn.close()
+    return result is not None

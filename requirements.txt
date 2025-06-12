@@ -3,3 +3,4 @@ openai
 gunicorn
 mysql-connector-python
 passlib
+python-dotenv
