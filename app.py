@@ -1,41 +1,80 @@
-
-from flask import Flask, render_template, request, redirect, url_for, session
-from models import add_log_entry, get_logs_by_user
-from auth import get_wp_user
+from flask import Flask, request, render_template, redirect, url_for, session
+from passlib.hash import phpass, bcrypt
+import mysql.connector
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
+app.secret_key = 'your_secret_key'
+
+def get_db_connection():
+    return mysql.connector.connect(
+        host="localhost",
+        user="i1816040_wp2",
+        password="H.qVNOLd8O39IKmlQFa50",
+        database="i1816040_wp2"
+    )
+
+def get_wp_user(username, password):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM wp_users WHERE user_login = %s", (username,))
+    user = cursor.fetchone()
+    conn.close()
+
+    if user and phpass.verify(password, user['user_pass']):
+        return user
+    return None
 
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        user = get_wp_user(username, password)
-        if user:
+
+        wp_user = get_wp_user(username, password)
+        if wp_user:
             session["username"] = username
             return redirect(url_for("dashboard"))
-        else:
-            return render_template("login.html", error="Invalid credentials.")
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM intern_users WHERE username = %s", (username,))
+        user = cursor.fetchone()
+        conn.close()
+
+        if user and bcrypt.verify(password, user['password_hash']):
+            session["username"] = username
+            return redirect(url_for("dashboard"))
+
+        return render_template("login.html", error="Invalid credentials.")
     return render_template("login.html")
 
-@app.route("/dashboard", methods=["GET", "POST"])
-def dashboard():
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    username = session["username"]
-
+@app.route("/register", methods=["GET", "POST"])
+def register():
     if request.method == "POST":
-        description = request.form["description"]
-        add_log_entry(username, description)
+        username = request.form["username"]
+        password = request.form["password"]
+        password_hash = bcrypt.hash(password)
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("INSERT INTO intern_users (username, password_hash) VALUES (%s, %s)", (username, password_hash))
+            conn.commit()
+            return redirect(url_for("login"))
+        except mysql.connector.errors.IntegrityError:
+            return render_template("register.html", error="Username already taken.")
+        finally:
+            conn.close()
+    return render_template("register.html")
 
-    logs = get_logs_by_user(username)
-    return render_template("logs.html", username=username, logs=logs)
+@app.route("/dashboard")
+def dashboard():
+    if "username" in session:
+        return f"Welcome {session['username']}! <a href='/logout'>Logout</a>"
+    return redirect(url_for("login"))
 
 @app.route("/logout")
 def logout():
-    session.clear()
+    session.pop("username", None)
     return redirect(url_for("login"))
 
 if __name__ == "__main__":
