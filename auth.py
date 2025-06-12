@@ -3,7 +3,7 @@ from passlib.hash import phpass
 
 def get_wp_user(username, password):
     conn = mysql.connector.connect(
-        host="REPLACE_WITH_YOUR_EXTERNAL_DB_HOST",  # e.g., i1816040.db.godaddy.com
+        host="mysql.secureserver.net",  # Updated host for GoDaddy MySQL remote access
         user="i1816040_wp2",
         password="H.qVNOLd8O39IKmlQFa50",
         database="i1816040_wp2"
