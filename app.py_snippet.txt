@@ -1,0 +1,14 @@
+from auth import get_wp_user
+
+@app.route("/", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        user = get_wp_user(username, password)
+        if user:
+            session["username"] = username
+            return redirect(url_for("dashboard"))
+        else:
+            return render_template("login.html", error="Invalid credentials.")
+    return render_template("login.html")

@@ -1,11 +1,14 @@
-
 <!DOCTYPE html>
 <html>
-<head><title>Login</title></head>
+<head><title>Intern Login</title></head>
 <body>
   <h2>Intern Login</h2>
+  {% if error %}
+    <p style="color:red;">{{ error }}</p>
+  {% endif %}
   <form method="POST">
-    Username: <input type="text" name="username" required>
+    Username: <input type="text" name="username" required><br>
+    Password: <input type="password" name="password" required><br>
     <button type="submit">Login</button>
   </form>
 </body>

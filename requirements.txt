@@ -1,4 +1,5 @@
-
 Flask==2.3.2
 openai
 gunicorn
+mysql-connector-python
+passlib
