@@ -1,25 +1,32 @@
+from passlib.hash import sha256_crypt
 import mysql.connector
+import os
+from dotenv import load_dotenv
+import openai
+
+load_dotenv()
 
 def get_db_connection():
     return mysql.connector.connect(
-        host="107.180.118.250",
-        user="i1816040_wp2",
-        password="H.qVNOLd8O39IKmlQFa50",
-        database="i1816040_wp2"
+        host=os.getenv("DB_HOST"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        database=os.getenv("DB_NAME")
     )
 
-def init_db():
+def register_user(first_name, last_name, school, username, password):
+    hashed_password = sha256_crypt.hash(password)
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(100) NOT NULL UNIQUE,
-            password VARCHAR(255) NOT NULL,
-            first_name VARCHAR(100),
-            last_name VARCHAR(100),
-            school VARCHAR(50)
-        )
-    """)
+    cursor.execute("INSERT INTO users (first_name, last_name, school, username, password) VALUES (%s, %s, %s, %s, %s)", 
+                   (first_name, last_name, school, username, hashed_password))
     conn.commit()
     conn.close()
+
+def log_action(action):
+    prompt = f"Log entry: {action}"
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+    openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )

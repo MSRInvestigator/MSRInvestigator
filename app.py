@@ -1,32 +1,44 @@
 from flask import Flask, request, render_template, redirect, url_for, session
-from passlib.hash import phpass
-from models import get_db_connection
 import mysql.connector
+import openai
+from dotenv import load_dotenv
+import os
+from auth import verify_user
+from models import register_user, log_action
+
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key"
+app.secret_key = os.getenv("SECRET_KEY")
+
+@app.route("/", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        if verify_user(username, password):
+            session["username"] = username
+            log_action(f"User {username} logged in")
+            return redirect(url_for("dashboard"))
+        else:
+            return render_template("login.html", error="Invalid credentials")
+    return render_template("login.html")
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+        first = request.form["first_name"]
+        last = request.form["last_name"]
+        school = request.form["school"]
         username = request.form["username"]
         password = request.form["password"]
-        first_name = request.form["first_name"]
-        last_name = request.form["last_name"]
-        school = request.form["school"]
-
-        hashed_password = phpass.hash(password)
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        try:
-            cursor.execute("INSERT INTO users (username, password, first_name, last_name, school) VALUES (%s, %s, %s, %s, %s)",
-                           (username, hashed_password, first_name, last_name, school))
-            conn.commit()
-        except mysql.connector.Error as err:
-            return f"Database error: {err}"
-        finally:
-            conn.close()
-
+        register_user(first, last, school, username, password)
+        log_action(f"New user registered: {username} from {school}")
         return redirect(url_for("login"))
     return render_template("register.html")
+
+@app.route("/dashboard")
+def dashboard():
+    if "username" in session:
+        return f"Welcome {session['username']}!"
+    return redirect(url_for("login"))
