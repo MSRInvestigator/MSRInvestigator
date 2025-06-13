@@ -1,31 +1,25 @@
-import os
 import mysql.connector
-from passlib.hash import phpass
-from dotenv import load_dotenv
-
-load_dotenv()
 
 def get_db_connection():
     return mysql.connector.connect(
-        host=os.getenv("DB_HOST"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        database=os.getenv("DB_NAME")
+        host="107.180.118.250",
+        user="i1816040_wp2",
+        password="H.qVNOLd8O39IKmlQFa50",
+        database="i1816040_wp2"
     )
 
-def create_user(username, password):
+def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
-    hashed_pw = phpass.hash(password)
-    cursor.execute("INSERT INTO wp_users (user_login, user_pass, user_email) VALUES (%s, %s, %s)",
-                   (username, hashed_pw, f"{username}@example.com"))
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(100) NOT NULL UNIQUE,
+            password VARCHAR(255) NOT NULL,
+            first_name VARCHAR(100),
+            last_name VARCHAR(100),
+            school VARCHAR(50)
+        )
+    """)
     conn.commit()
     conn.close()
-
-def user_exists(username):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT ID FROM wp_users WHERE user_login = %s", (username,))
-    result = cursor.fetchone()
-    conn.close()
-    return result is not None
